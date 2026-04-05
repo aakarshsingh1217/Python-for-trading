@@ -1,18 +1,22 @@
 import yfinance as yf
 import pandas as pd
+import matplotlib.pyplot as plt
 
 # Get Apple stock data
-df = yf.download("AAPL", start="2020-02-28", end="2020-03-28", auto_adjust=False)
+df = yf.download("XOM", period="5y", auto_adjust=False)
 df.columns = df.columns.get_level_values(0)
-df = df.rename(columns={'Close': 'Price'})
-df['Trend'] = df['Price'].diff().apply(lambda x: 'Up' if x > 0 else 'Down')
-df = df.reset_index()
-df = df[['Date', 'Price', 'Volume', 'Trend']]
-df.columns.name = None
-df = df.sort_values(by="Date", ascending=False).reset_index(drop=True)
+monthly = df.resample("MS").agg({
+    "High": "max",
+    "Volume": "sum"
+})
+monthly = monthly.reset_index()
+monthly["Month"] = monthly["Date"].dt.strftime("%b")
+monthly = monthly[["Date", "High", "Volume", "Month"]]
+monthly = monthly.sort_values(by="Date", ascending=True).reset_index(drop=True)
+print(monthly.head())
+monthly.plot(x="Month",
+             y="Volume",
+             kind="bar",
+             title="Exxon Stock Price")
 
-print(df.Price > 60)
-print("###############")
-mask_symbol = df.Trend == "Up"
-aapl = df.loc[mask_symbol]
-print(aapl.head())
+plt.show()
